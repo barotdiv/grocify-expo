@@ -3,7 +3,9 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
+    "@clerk/expo": "^4.4.0",
     "@expo/ui": "~57.0.11",
+    "@expo/vector-icons": "^15.0.2",
     "babel-preset-expo": "^57.0.7",
     "expo": "~57.0.13",
     "expo-constants": "~57.0.8",
@@ -13,6 +15,7 @@
     "expo-image": "~57.0.3",
     "expo-linking": "~57.0.6",
     "expo-router": "~57.0.13",
+    "expo-secure-store": "~57.0.1",
     "expo-splash-screen": "~57.0.6",
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.2",
