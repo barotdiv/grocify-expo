@@ -1,9 +1,10 @@
+import AuthImage from "../../../assets/images/auth.png";
 import useSocialAuth from "@/hooks/useSocialAuth";
-import { FontAwesome, FontAwesome6 } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { Link } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+import { FontAwesome, FontAwesome6 } from "@expo/vector-icons";
 
 export default function SignInScreen() {
   const { handleSocialAuth, loadingStrategy } = useSocialAuth();
@@ -31,14 +32,14 @@ export default function SignInScreen() {
 
         <View className="mt-6 rounded-[30px] border border-white/20 bg-white/10 p-3">
           <Image
-            source={require("../../../assets/images/logo-glow.png")}
-            style={{ width: "100%", height: 260 }}
+            source={AuthImage}
+            style={{ width: "100%", height: 300 }}
             contentFit="contain"
           />
         </View>
       </View>
 
-      <View className="mt-6 flex-1 rounded-t-[36px] bg-card px-6 pb-8 pt-6">
+      <View className="mt-8 flex-1 rounded-t-[36px] bg-card px-6 pb-8 pt-6">
         <View className="self-center rounded-full bg-secondary px-3 py-1">
           <Text className="text-xs font-semibold uppercase tracking-[1px] text-secondary-foreground">
             Welcome Back
@@ -51,14 +52,16 @@ export default function SignInScreen() {
 
         <View className="mt-6">
           <Pressable
-            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-border bg-card px-4 active:opacity-90 ${
-              isLoading ? "opacity-70" : ""
-            }`}
+            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-border bg-card px-4 active:opacity-90 ${isLoading ? "opacity-70" : ""
+              }`}
             disabled={isLoading}
             onPress={() => handleSocialAuth("oauth_google")}
           >
             <View className="h-8 w-8 items-center justify-center rounded-full bg-white">
-              <FontAwesome name="google" size={20} color="#EA4335" />
+              <Image
+                source={require("../../../assets/images/google.png")}
+                style={{ width: 20, height: 20 }}
+              />
             </View>
 
             <Text className="ml-3 flex-1 text-lg font-semibold text-card-foreground">
@@ -69,9 +72,8 @@ export default function SignInScreen() {
           </Pressable>
 
           <Pressable
-            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-border bg-card px-4 active:opacity-90 ${
-              isLoading ? "opacity-70" : ""
-            }`}
+            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-border bg-card px-4 active:opacity-90 ${isLoading ? "opacity-70" : ""
+              }`}
             disabled={isLoading}
             onPress={() => handleSocialAuth("oauth_github")}
           >
@@ -85,9 +87,8 @@ export default function SignInScreen() {
           </Pressable>
 
           <Pressable
-            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-foreground bg-foreground px-4 active:opacity-90 ${
-              isLoading ? "opacity-70" : ""
-            }`}
+            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-foreground bg-foreground px-4 active:opacity-90 ${isLoading ? "opacity-70" : ""
+              }`}
             disabled={isLoading}
             onPress={() => handleSocialAuth("oauth_apple")}
           >
@@ -101,14 +102,7 @@ export default function SignInScreen() {
           </Pressable>
         </View>
 
-        <View className="mt-4 flex-row justify-center">
-          <Text className="text-sm text-muted-foreground">Don't have an account? </Text>
-          <Link href="./sign-up" className="text-sm font-bold text-primary">
-            Sign Up
-          </Link>
-        </View>
-
-        <Text className="mt-3 text-center text-xs leading-5 text-muted-foreground">
+        <Text className="mt-3 text-center text-sm leading-5 text-muted-foreground">
           By continuing, you agree to our Terms and Privacy Policy.
         </Text>
       </View>
