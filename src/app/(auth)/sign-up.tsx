@@ -1,6 +1,6 @@
-import { useSignUp } from "@clerk/expo/legacy";
-import { Link, useRouter } from "expo-router";
-import { useState } from "react";
+import { useAuth, useSignUp } from "@clerk/expo";
+import { type Href, Link, useRouter } from "expo-router";
+import React from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -11,144 +11,159 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function SignUpScreen() {
-  const { signUp, setActive, isLoaded } = useSignUp();
+export default function Page() {
+  const { signUp, errors, fetchStatus } = useSignUp();
+  const { isSignedIn } = useAuth();
   const router = useRouter();
 
-  const [emailAddress, setEmailAddress] = useState("");
-  const [password, setPassword] = useState("");
-  const [code, setCode] = useState("");
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [emailAddress, setEmailAddress] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [code, setCode] = React.useState("");
 
-  const handleSignUp = async () => {
-    if (!isLoaded || loading) return;
-    setLoading(true);
-    setErrorMsg("");
-
+  const handleSubmit = async () => {
+    if (!signUp) return;
     try {
-      await signUp.create({
+      const { error } = await signUp.password({
         emailAddress,
         password,
       });
-
-      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-      setIsVerifying(true);
-    } catch (err: any) {
-      console.error(JSON.stringify(err, null, 2));
-      setErrorMsg(err?.errors?.[0]?.message || "Failed to sign up");
-    } finally {
-      setLoading(false);
+      if (error) {
+        console.error(JSON.stringify(error, null, 2));
+        return;
+      }
+      await signUp.verifications.sendEmailCode();
+    } catch (err) {
+      console.error("Sign up error:", err);
     }
   };
 
   const handleVerify = async () => {
-    if (!isLoaded || loading) return;
-    setLoading(true);
-    setErrorMsg("");
-
+    if (!signUp) return;
     try {
-      const completeSignUp = await signUp.attemptEmailAddressVerification({
+      await signUp.verifications.verifyEmailCode({
         code,
       });
-
-      if (completeSignUp.status === "complete") {
-        await setActive({ session: completeSignUp.createdSessionId });
-        router.replace("/");
+      if (signUp.status === "complete") {
+        await signUp.finalize({
+          navigate: ({ session, decorateUrl }) => {
+            if (session?.currentTask) {
+              console.log(session?.currentTask);
+              return;
+            }
+            const url = decorateUrl("/");
+            if (typeof window !== "undefined" && url.startsWith("http")) {
+              window.location.href = url;
+            } else {
+              router.replace(url as Href);
+            }
+          },
+        });
       } else {
-        console.log(JSON.stringify(completeSignUp, null, 2));
+        console.error("Sign-up attempt not complete:", signUp);
       }
-    } catch (err: any) {
-      console.error(JSON.stringify(err, null, 2));
-      setErrorMsg(err?.errors?.[0]?.message || "Invalid verification code");
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.error("Verify error:", err);
     }
   };
 
+  if (signUp?.status === "complete" || isSignedIn) {
+    return null;
+  }
+
+  if (
+    signUp?.status === "missing_requirements" &&
+    signUp.unverifiedFields?.includes("email_address") &&
+    signUp.missingFields?.length === 0
+  ) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+        <View style={styles.container}>
+          <Text style={[styles.title, { fontSize: 24, fontWeight: "bold" }]}>
+            Verify your account
+          </Text>
+          <TextInput
+            style={styles.input}
+            value={code}
+            placeholder="Enter your verification code"
+            placeholderTextColor="#666666"
+            onChangeText={(code) => setCode(code)}
+            keyboardType="numeric"
+          />
+          {errors?.fields?.code && (
+            <Text style={styles.error}>{errors.fields.code.message}</Text>
+          )}
+          {errors?.global && (
+            <Text style={styles.error}>
+              {errors.global.map((e) => e.message).join(", ")}
+            </Text>
+          )}
+          <Pressable
+            style={({ pressed }) => [
+              styles.button,
+              fetchStatus === "fetching" && styles.buttonDisabled,
+              pressed && styles.buttonPressed,
+            ]}
+            onPress={handleVerify}
+            disabled={fetchStatus === "fetching"}
+          >
+            {fetchStatus === "fetching" ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <Text style={styles.buttonText}>Verify</Text>
+            )}
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
-      {/* Top Header Bar with pill button */}
-      <View style={styles.header}>
-        <Link href="/sign-in" asChild>
-          <Pressable style={styles.backButton}>
-            <Text style={styles.backButtonText}>‹ sign-in</Text>
-          </Pressable>
-        </Link>
-        <Text style={styles.headerTitle}>sign-up</Text>
-      </View>
-
       <View style={styles.container}>
         <Text style={styles.title}>Sign up</Text>
-
-        {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
-
-        {isVerifying ? (
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Verification Code</Text>
-            <TextInput
-              style={styles.input}
-              value={code}
-              placeholder="Enter your verification code"
-              placeholderTextColor="#9ca3af"
-              onChangeText={setCode}
-              keyboardType="numeric"
-            />
-            <Pressable
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleVerify}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Verify Email</Text>
-              )}
-            </Pressable>
-          </View>
-        ) : (
-          <>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Email address</Text>
-              <TextInput
-                style={styles.input}
-                autoCapitalize="none"
-                value={emailAddress}
-                placeholder="Enter email"
-                placeholderTextColor="#9ca3af"
-                onChangeText={setEmailAddress}
-                keyboardType="email-address"
-              />
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={styles.input}
-                value={password}
-                placeholder="Enter password"
-                placeholderTextColor="#9ca3af"
-                secureTextEntry={true}
-                onChangeText={setPassword}
-              />
-            </View>
-
-            <Pressable
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleSignUp}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>Sign up</Text>
-              )}
-            </Pressable>
-          </>
+        {errors?.fields?.emailAddress && (
+          <Text style={styles.error}>{errors.fields.emailAddress.message}</Text>
         )}
-
-        {/* Footer Link */}
+        {errors?.fields?.password && (
+          <Text style={styles.error}>{errors.fields.password.message}</Text>
+        )}
+        {errors?.global && (
+          <Text style={styles.error}>
+            {errors.global.map((e) => e.message).join(", ")}
+          </Text>
+        )}
+        <TextInput
+          style={styles.input}
+          autoCapitalize="none"
+          value={emailAddress}
+          placeholder="Enter email"
+          placeholderTextColor="#9ca3af"
+          onChangeText={setEmailAddress}
+          keyboardType="email-address"
+        />
+        <TextInput
+          style={styles.input}
+          value={password}
+          placeholder="Enter password"
+          placeholderTextColor="#9ca3af"
+          secureTextEntry={true}
+          onChangeText={setPassword}
+        />
+        <Pressable
+          style={({ pressed }) => [
+            styles.button,
+            fetchStatus === "fetching" && styles.buttonDisabled,
+            pressed && styles.buttonPressed,
+          ]}
+          onPress={handleSubmit}
+          disabled={fetchStatus === "fetching"}
+        >
+          {fetchStatus === "fetching" ? (
+            <ActivityIndicator color="#ffffff" />
+          ) : (
+            <Text style={styles.buttonText}>Sign up</Text>
+          )}
+        </Pressable>
         <View style={styles.footer}>
           <Text style={styles.footerText}>Already have an account? </Text>
           <Link href="/sign-in" asChild>
@@ -158,7 +173,7 @@ export default function SignUpScreen() {
           </Link>
         </View>
 
-        {/* Required for sign-up flows on Expo web */}
+        {/* Required for bot detection / captcha challenges */}
         <View nativeID="clerk-captcha" />
       </View>
     </SafeAreaView>
@@ -170,36 +185,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f9fafb",
   },
-  header: {
-    height: 48,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-    position: "relative",
-  },
-  backButton: {
-    position: "absolute",
-    left: 16,
-    backgroundColor: "#e5e7eb",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  backButtonText: {
-    fontSize: 14,
-    fontWeight: "500",
-    color: "#374151",
-  },
-  headerTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-  },
   container: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 16,
+    paddingTop: 40,
+    backgroundColor: "#f9fafb",
   },
   title: {
     fontSize: 28,
@@ -207,19 +197,10 @@ const styles = StyleSheet.create({
     color: "#111827",
     marginBottom: 24,
   },
-  errorText: {
+  error: {
     color: "#ef4444",
     marginBottom: 12,
     fontSize: 14,
-  },
-  fieldGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#1f2937",
-    marginBottom: 6,
   },
   input: {
     backgroundColor: "#ffffff",
@@ -230,6 +211,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     color: "#111827",
+    marginBottom: 12,
   },
   button: {
     backgroundColor: "#0284c7",
@@ -241,6 +223,9 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.7,
+  },
+  buttonPressed: {
+    opacity: 0.85,
   },
   buttonText: {
     color: "#ffffff",
