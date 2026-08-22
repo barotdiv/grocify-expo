@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useAuth, useSignUp } from "@clerk/expo";
 import { type Href, Link, useRouter } from "expo-router";
 import React from "react";
@@ -77,18 +78,31 @@ export default function Page() {
   ) {
     return (
       <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+        {/* Top Header Bar */}
+        <View style={styles.header}>
+          <Link href="/sign-in" asChild>
+            <Pressable style={styles.backButton}>
+              <Ionicons name="chevron-back" size={20} color="#000000" />
+              <Text style={styles.backButtonText}>sign-in</Text>
+            </Pressable>
+          </Link>
+          <Text style={styles.headerTitle}>sign-up</Text>
+        </View>
         <View style={styles.container}>
           <Text style={[styles.title, { fontSize: 24, fontWeight: "bold" }]}>
             Verify your account
           </Text>
-          <TextInput
-            style={styles.input}
-            value={code}
-            placeholder="Enter your verification code"
-            placeholderTextColor="#666666"
-            onChangeText={(code) => setCode(code)}
-            keyboardType="numeric"
-          />
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Verification code</Text>
+            <TextInput
+              style={styles.input}
+              value={code}
+              placeholder="Enter your verification code"
+              placeholderTextColor="#9ca3af"
+              onChangeText={(code) => setCode(code)}
+              keyboardType="numeric"
+            />
+          </View>
           {errors?.fields?.code && (
             <Text style={styles.error}>{errors.fields.code.message}</Text>
           )}
@@ -119,6 +133,16 @@ export default function Page() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+      {/* Top Header Bar */}
+      <View style={styles.header}>
+        <Link href="/sign-in" asChild>
+          <Pressable style={styles.backButton}>
+            <Ionicons name="chevron-back" size={20} color="#000000" />
+            <Text style={styles.backButtonText}>sign-in</Text>
+          </Pressable>
+        </Link>
+        <Text style={styles.headerTitle}>sign-up</Text>
+      </View>
       <View style={styles.container}>
         <Text style={styles.title}>Sign up</Text>
         {errors?.fields?.emailAddress && (
@@ -132,23 +156,29 @@ export default function Page() {
             {errors.global.map((e) => e.message).join(", ")}
           </Text>
         )}
-        <TextInput
-          style={styles.input}
-          autoCapitalize="none"
-          value={emailAddress}
-          placeholder="Enter email"
-          placeholderTextColor="#9ca3af"
-          onChangeText={setEmailAddress}
-          keyboardType="email-address"
-        />
-        <TextInput
-          style={styles.input}
-          value={password}
-          placeholder="Enter password"
-          placeholderTextColor="#9ca3af"
-          secureTextEntry={true}
-          onChangeText={setPassword}
-        />
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Email address</Text>
+          <TextInput
+            style={styles.input}
+            autoCapitalize="none"
+            value={emailAddress}
+            placeholder="Enter email"
+            placeholderTextColor="#9ca3af"
+            onChangeText={setEmailAddress}
+            keyboardType="email-address"
+          />
+        </View>
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Password</Text>
+          <TextInput
+            style={styles.input}
+            value={password}
+            placeholder="Enter password"
+            placeholderTextColor="#9ca3af"
+            secureTextEntry={true}
+            onChangeText={setPassword}
+          />
+        </View>
         <Pressable
           style={({ pressed }) => [
             styles.button,
@@ -185,10 +215,46 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f9fafb",
   },
+  header: {
+    height: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    position: "relative",
+  },
+  backButton: {
+    position: "absolute",
+    left: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#ffffff",
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  backButtonText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: "#000000",
+    marginLeft: 2,
+  },
+  headerTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#374151",
+  },
   container: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 40,
+    paddingTop: 16,
     backgroundColor: "#f9fafb",
   },
   title: {
@@ -202,6 +268,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     fontSize: 14,
   },
+  fieldGroup: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1f2937",
+    marginBottom: 6,
+  },
   input: {
     backgroundColor: "#ffffff",
     borderWidth: 1,
@@ -211,7 +286,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     color: "#111827",
-    marginBottom: 12,
   },
   button: {
     backgroundColor: "#0284c7",

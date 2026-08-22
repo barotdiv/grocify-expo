@@ -1,6 +1,6 @@
-import { useSignIn } from "@clerk/expo/legacy";
-import { Link, useRouter } from "expo-router";
-import { useState } from "react";
+import { useSignIn } from "@clerk/expo";
+import { type Href, Link, useRouter } from "expo-router";
+import React from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -11,39 +11,136 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function SignInScreen() {
-  const { signIn, setActive, isLoaded } = useSignIn();
+export default function Page() {
+  const { signIn, errors, fetchStatus } = useSignIn();
   const router = useRouter();
 
-  const [emailAddress, setEmailAddress] = useState("");
-  const [password, setPassword] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [emailAddress, setEmailAddress] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [code, setCode] = React.useState("");
 
-  const handleSignIn = async () => {
-    if (!isLoaded || loading) return;
-    setLoading(true);
-    setErrorMsg("");
-
+  const handleSubmit = async () => {
+    if (!signIn) return;
     try {
-      const result = await signIn.create({
-        identifier: emailAddress,
+      const { error } = await signIn.password({
+        emailAddress,
         password,
       });
-
-      if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
-        router.replace("/");
-      } else {
-        console.log(JSON.stringify(result, null, 2));
+      if (error) {
+        console.error(JSON.stringify(error, null, 2));
+        return;
       }
-    } catch (err: any) {
-      console.error(JSON.stringify(err, null, 2));
-      setErrorMsg(err?.errors?.[0]?.message || "Invalid credentials");
-    } finally {
-      setLoading(false);
+      if (signIn.status === "complete") {
+        await signIn.finalize({
+          navigate: ({ session, decorateUrl }) => {
+            if (session?.currentTask) {
+              console.log(session?.currentTask);
+              return;
+            }
+            const url = decorateUrl("/");
+            if (typeof window !== "undefined" && url.startsWith("http")) {
+              window.location.href = url;
+            } else {
+              router.push(url as Href);
+            }
+          },
+        });
+      } else if (
+        signIn.status === "needs_second_factor" ||
+        signIn.status === "needs_client_trust"
+      ) {
+        const emailCodeFactor = signIn.supportedSecondFactors?.find(
+          (factor) => factor.strategy === "email_code"
+        );
+        if (emailCodeFactor) {
+          await signIn.mfa.sendEmailCode();
+        }
+      } else {
+        console.error("Sign-in attempt not complete:", signIn);
+      }
+    } catch (err) {
+      console.error("Sign in error:", err);
     }
   };
+
+  const handleVerify = async () => {
+    if (!signIn) return;
+    try {
+      await signIn.mfa.verifyEmailCode({ code });
+      if (signIn.status === "complete") {
+        await signIn.finalize({
+          navigate: ({ session, decorateUrl }) => {
+            if (session?.currentTask) {
+              console.log(session?.currentTask);
+              return;
+            }
+            const url = decorateUrl("/");
+            if (typeof window !== "undefined" && url.startsWith("http")) {
+              window.location.href = url;
+            } else {
+              router.push(url as Href);
+            }
+          },
+        });
+      } else {
+        console.error("Sign-in verification attempt not complete:", signIn);
+      }
+    } catch (err) {
+      console.error("Verify error:", err);
+    }
+  };
+
+  if (
+    signIn?.status === "needs_second_factor" ||
+    signIn?.status === "needs_client_trust"
+  ) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>sign-in</Text>
+        </View>
+        <View style={styles.container}>
+          <Text style={[styles.title, { fontSize: 24, fontWeight: "bold" }]}>
+            Verify your account
+          </Text>
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>Verification code</Text>
+            <TextInput
+              style={styles.input}
+              value={code}
+              placeholder="Enter your verification code"
+              placeholderTextColor="#9ca3af"
+              onChangeText={setCode}
+              keyboardType="numeric"
+            />
+          </View>
+          {errors?.fields?.code && (
+            <Text style={styles.errorText}>{errors.fields.code.message}</Text>
+          )}
+          {errors?.global && (
+            <Text style={styles.errorText}>
+              {errors.global.map((e) => e.message).join(", ")}
+            </Text>
+          )}
+          <Pressable
+            style={({ pressed }) => [
+              styles.button,
+              fetchStatus === "fetching" && styles.buttonDisabled,
+              pressed && styles.buttonPressed,
+            ]}
+            onPress={handleVerify}
+            disabled={fetchStatus === "fetching"}
+          >
+            {fetchStatus === "fetching" ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <Text style={styles.buttonText}>Verify</Text>
+            )}
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
@@ -55,7 +152,17 @@ export default function SignInScreen() {
       <View style={styles.container}>
         <Text style={styles.title}>Sign in</Text>
 
-        {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
+        {errors?.fields?.identifier && (
+          <Text style={styles.errorText}>{errors.fields.identifier.message}</Text>
+        )}
+        {errors?.fields?.password && (
+          <Text style={styles.errorText}>{errors.fields.password.message}</Text>
+        )}
+        {errors?.global && (
+          <Text style={styles.errorText}>
+            {errors.global.map((e) => e.message).join(", ")}
+          </Text>
+        )}
 
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>Email address</Text>
@@ -83,12 +190,16 @@ export default function SignInScreen() {
         </View>
 
         <Pressable
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleSignIn}
-          disabled={loading}
+          style={({ pressed }) => [
+            styles.button,
+            fetchStatus === "fetching" && styles.buttonDisabled,
+            pressed && styles.buttonPressed,
+          ]}
+          onPress={handleSubmit}
+          disabled={fetchStatus === "fetching"}
         >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
+          {fetchStatus === "fetching" ? (
+            <ActivityIndicator color="#ffffff" />
           ) : (
             <Text style={styles.buttonText}>Sign in</Text>
           )}
@@ -170,6 +281,9 @@ const styles = StyleSheet.create({
   buttonDisabled: {
     opacity: 0.7,
   },
+  buttonPressed: {
+    opacity: 0.85,
+  },
   buttonText: {
     color: "#ffffff",
     fontSize: 16,
@@ -190,4 +304,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
-
