@@ -1,116 +1,193 @@
-import useSocialAuth from "@/hooks/useSocialAuth";
-import { Image } from "expo-image";
-import { Pressable, Text, View } from "react-native";
+import { useSignIn } from "@clerk/expo/legacy";
+import { Link, useRouter } from "expo-router";
+import { useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AuthImage from "../../../assets/images/splash-icon.png";
-
-import { FontAwesome, FontAwesome6 } from "@expo/vector-icons";
 
 export default function SignInScreen() {
-  const { handleSocialAuth, loadingStrategy } = useSocialAuth();
+  const { signIn, setActive, isLoaded } = useSignIn();
+  const router = useRouter();
 
-  const isGoogleClicked = loadingStrategy === "oauth_google";
-  const isAppleClicked = loadingStrategy === "oauth_apple";
-  const isGitHubClicked = loadingStrategy === "oauth_github";
+  const [emailAddress, setEmailAddress] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const isLoading = isAppleClicked || isGitHubClicked || isGoogleClicked;
+  const handleSignIn = async () => {
+    if (!isLoaded || loading) return;
+    setLoading(true);
+    setErrorMsg("");
+
+    try {
+      const result = await signIn.create({
+        identifier: emailAddress,
+        password,
+      });
+
+      if (result.status === "complete") {
+        await setActive({ session: result.createdSessionId });
+        router.replace("/");
+      } else {
+        console.log(JSON.stringify(result, null, 2));
+      }
+    } catch (err: any) {
+      console.error(JSON.stringify(err, null, 2));
+      setErrorMsg(err?.errors?.[0]?.message || "Invalid credentials");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <SafeAreaView
-      className="flex-1 bg-primary dark:bg-secondary"
-      edges={["top"]}
-    >
-      {/* decorative elements */}
-      <View className="absolute -left-16 top-12 h-56 w-56 rounded-full bg-primary/80 dark:bg-background/40" />
-      <View className="absolute right-[-74px] top-40 h-72 w-72 rounded-full bg-primary/70 dark:bg-background/35" />
-
-      <View className="px-6 pt-4">
-        <Text className="text-center text-5xl font-extrabold tracking-tight text-primary-foreground uppercase font-mono dark:text-foreground">
-          Grocify
-        </Text>
-
-        <Text className="mt-1 text-center text-[14px] text-primary-foreground/80 dark:text-foreground/75">
-          Plan smarter. Shop happier.
-        </Text>
-
-        <View className="mt-6 rounded-[30px] border border-white/20 bg-white/10 p-3">
-          <Image
-            source={AuthImage}
-            style={{ width: "100%", height: 300 }}
-            contentFit="contain"
-          />
-        </View>
+    <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+      {/* Top Header Bar */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>sign-in</Text>
       </View>
 
-      <View className="mt-8 flex-1 rounded-t-[36px] bg-card px-6 pb-8 pt-6">
-        <View className="self-center rounded-full bg-secondary px-3 py-1">
-          <Text className="text-xs font-semibold uppercase tracking-[1px] text-secondary-foreground">
-            Welcome Back
-          </Text>
+      <View style={styles.container}>
+        <Text style={styles.title}>Sign in</Text>
+
+        {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
+
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Email address</Text>
+          <TextInput
+            style={styles.input}
+            autoCapitalize="none"
+            value={emailAddress}
+            placeholder="Enter email"
+            placeholderTextColor="#9ca3af"
+            onChangeText={setEmailAddress}
+            keyboardType="email-address"
+          />
         </View>
 
-        <Text className="mt-2 text-center text-sm leading-6 text-muted-foreground">
-          Choose a social provider and jump right into your personalized grocery
-          experience.
-        </Text>
-
-        <View className="mt-6">
-          <Pressable
-            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-border bg-card px-4 active:opacity-90 ${isLoading ? "opacity-70" : ""
-              }`}
-            disabled={isLoading}
-            onPress={() => handleSocialAuth("oauth_google")}
-          >
-            <View className="h-8 w-8 items-center justify-center rounded-full bg-white">
-              <FontAwesome name="google" size={20} color="#4285F4" />
-            </View>
-
-            <Text className="ml-3 flex-1 text-lg font-semibold text-card-foreground">
-              {isGoogleClicked
-                ? "Connecting Google..."
-                : "Continue with Google"}
-            </Text>
-
-            <FontAwesome name="angle-right" size={18} color="#5f6e66" />
-          </Pressable>
-
-          <Pressable
-            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-border bg-card px-4 active:opacity-90 ${isLoading ? "opacity-70" : ""
-              }`}
-            disabled={isLoading}
-            onPress={() => handleSocialAuth("oauth_github")}
-          >
-            <View className="h-8 w-8 items-center justify-center rounded-full bg-white">
-              <FontAwesome name="github" size={24} color="#111" />
-            </View>
-            <Text className="ml-3 flex-1 text-lg font-semibold text-card-foreground">
-              {isGitHubClicked
-                ? "Connecting GitHub..."
-                : "Continue with GitHub"}
-            </Text>
-            <FontAwesome name="angle-right" size={18} color="#5f6e66" />
-          </Pressable>
-
-          <Pressable
-            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-foreground bg-foreground px-4 active:opacity-90 ${isLoading ? "opacity-70" : ""
-              }`}
-            disabled={isLoading}
-            onPress={() => handleSocialAuth("oauth_apple")}
-          >
-            <View className="h-8 w-8 items-center justify-center rounded-full bg-white">
-              <FontAwesome6 name="apple" size={22} color="#111" />
-            </View>
-            <Text className="ml-3 flex-1 text-lg font-semibold text-background">
-              {isAppleClicked ? "Connecting Apple..." : "Continue with Apple"}
-            </Text>
-            <FontAwesome name="angle-right" size={18} color="#5f6e66" />
-          </Pressable>
+        <View style={styles.fieldGroup}>
+          <Text style={styles.label}>Password</Text>
+          <TextInput
+            style={styles.input}
+            value={password}
+            placeholder="Enter password"
+            placeholderTextColor="#9ca3af"
+            secureTextEntry={true}
+            onChangeText={setPassword}
+          />
         </View>
 
-        <Text className="mt-3 text-center text-sm leading-5 text-muted-foreground">
-          By continuing, you agree to our Terms and Privacy Policy.
-        </Text>
+        <Pressable
+          style={[styles.button, loading && styles.buttonDisabled]}
+          onPress={handleSignIn}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Sign in</Text>
+          )}
+        </Pressable>
+
+        {/* Footer Link */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Don't have an account? </Text>
+          <Link href="/sign-up" asChild>
+            <Pressable>
+              <Text style={styles.linkText}>Sign up</Text>
+            </Pressable>
+          </Link>
+        </View>
       </View>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#f9fafb",
+  },
+  header: {
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+  },
+  headerTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#374151",
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#111827",
+    marginBottom: 24,
+  },
+  errorText: {
+    color: "#ef4444",
+    marginBottom: 12,
+    fontSize: 14,
+  },
+  fieldGroup: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1f2937",
+    marginBottom: 6,
+  },
+  input: {
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: "#111827",
+  },
+  button: {
+    backgroundColor: "#0284c7",
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  buttonDisabled: {
+    opacity: 0.7,
+  },
+  buttonText: {
+    color: "#ffffff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  footer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 12,
+  },
+  footerText: {
+    fontSize: 14,
+    color: "#6b7280",
+  },
+  linkText: {
+    fontSize: 14,
+    color: "#0284c7",
+    fontWeight: "600",
+  },
+});
+
