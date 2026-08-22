@@ -56,9 +56,8 @@ export default function SignInScreen() {
 
         <View className="mt-6">
           <Pressable
-            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-border bg-card px-4 active:opacity-90 ${
-              isLoading ? "opacity-70" : ""
-            }`}
+            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-border bg-card px-4 active:opacity-90 ${isLoading ? "opacity-70" : ""
+              }`}
             disabled={isLoading}
             onPress={() => handleSocialAuth("oauth_google")}
           >
@@ -76,9 +75,8 @@ export default function SignInScreen() {
           </Pressable>
 
           <Pressable
-            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-border bg-card px-4 active:opacity-90 ${
-              isLoading ? "opacity-70" : ""
-            }`}
+            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-border bg-card px-4 active:opacity-90 ${isLoading ? "opacity-70" : ""
+              }`}
             disabled={isLoading}
             onPress={() => handleSocialAuth("oauth_github")}
           >
@@ -94,9 +92,8 @@ export default function SignInScreen() {
           </Pressable>
 
           <Pressable
-            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-foreground bg-foreground px-4 active:opacity-90 ${
-              isLoading ? "opacity-70" : ""
-            }`}
+            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-foreground bg-foreground px-4 active:opacity-90 ${isLoading ? "opacity-70" : ""
+              }`}
             disabled={isLoading}
             onPress={() => handleSocialAuth("oauth_apple")}
           >
