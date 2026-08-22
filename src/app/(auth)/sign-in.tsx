@@ -1,8 +1,8 @@
-import AuthImage from "../../../assets/images/auth.png";
 import useSocialAuth from "@/hooks/useSocialAuth";
 import { Image } from "expo-image";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AuthImage from "../../../assets/images/splash-icon.png";
 
 import { FontAwesome, FontAwesome6 } from "@expo/vector-icons";
 
@@ -16,7 +16,10 @@ export default function SignInScreen() {
   const isLoading = isAppleClicked || isGitHubClicked || isGoogleClicked;
 
   return (
-    <SafeAreaView className="flex-1 bg-primary dark:bg-secondary" edges={["top"]}>
+    <SafeAreaView
+      className="flex-1 bg-primary dark:bg-secondary"
+      edges={["top"]}
+    >
       {/* decorative elements */}
       <View className="absolute -left-16 top-12 h-56 w-56 rounded-full bg-primary/80 dark:bg-background/40" />
       <View className="absolute right-[-74px] top-40 h-72 w-72 rounded-full bg-primary/70 dark:bg-background/35" />
@@ -47,33 +50,35 @@ export default function SignInScreen() {
         </View>
 
         <Text className="mt-2 text-center text-sm leading-6 text-muted-foreground">
-          Choose a social provider and jump right into your personalized grocery experience.
+          Choose a social provider and jump right into your personalized grocery
+          experience.
         </Text>
 
         <View className="mt-6">
           <Pressable
-            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-border bg-card px-4 active:opacity-90 ${isLoading ? "opacity-70" : ""
-              }`}
+            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-border bg-card px-4 active:opacity-90 ${
+              isLoading ? "opacity-70" : ""
+            }`}
             disabled={isLoading}
             onPress={() => handleSocialAuth("oauth_google")}
           >
             <View className="h-8 w-8 items-center justify-center rounded-full bg-white">
-              <Image
-                source={require("../../../assets/images/google.png")}
-                style={{ width: 20, height: 20 }}
-              />
+              <FontAwesome name="google" size={20} color="#4285F4" />
             </View>
 
             <Text className="ml-3 flex-1 text-lg font-semibold text-card-foreground">
-              {isGoogleClicked ? "Connecting Google..." : "Continue with Google"}
+              {isGoogleClicked
+                ? "Connecting Google..."
+                : "Continue with Google"}
             </Text>
 
             <FontAwesome name="angle-right" size={18} color="#5f6e66" />
           </Pressable>
 
           <Pressable
-            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-border bg-card px-4 active:opacity-90 ${isLoading ? "opacity-70" : ""
-              }`}
+            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-border bg-card px-4 active:opacity-90 ${
+              isLoading ? "opacity-70" : ""
+            }`}
             disabled={isLoading}
             onPress={() => handleSocialAuth("oauth_github")}
           >
@@ -81,14 +86,17 @@ export default function SignInScreen() {
               <FontAwesome name="github" size={24} color="#111" />
             </View>
             <Text className="ml-3 flex-1 text-lg font-semibold text-card-foreground">
-              {isGitHubClicked ? "Connecting GitHub..." : "Continue with GitHub"}
+              {isGitHubClicked
+                ? "Connecting GitHub..."
+                : "Continue with GitHub"}
             </Text>
             <FontAwesome name="angle-right" size={18} color="#5f6e66" />
           </Pressable>
 
           <Pressable
-            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-foreground bg-foreground px-4 active:opacity-90 ${isLoading ? "opacity-70" : ""
-              }`}
+            className={`mb-3 h-14 flex-row items-center rounded-2xl border border-foreground bg-foreground px-4 active:opacity-90 ${
+              isLoading ? "opacity-70" : ""
+            }`}
             disabled={isLoading}
             onPress={() => handleSocialAuth("oauth_apple")}
           >
