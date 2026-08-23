@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useAuth, useSignUp } from "@clerk/expo";
-import { type Href, Link, useRouter } from "expo-router";
-import React from "react";
+import { useAuth } from "@clerk/expo";
+import { useSignUp } from "@clerk/expo/legacy";
+import { Link, useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -21,82 +22,91 @@ function GoogleIcon() {
   );
 }
 
-export default function Page() {
-  const { signUp, errors, fetchStatus } = useSignUp();
+export default function SignUpScreen() {
+  const { isLoaded, signUp, setActive } = useSignUp();
   const { handleSocialAuth, loadingStrategy } = useSocialAuth();
   const { isSignedIn } = useAuth();
   const router = useRouter();
 
-  const [emailAddress, setEmailAddress] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [code, setCode] = React.useState("");
+  const [emailAddress, setEmailAddress] = useState("");
+  const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [pendingVerification, setPendingVerification] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const handleSubmit = async () => {
-    if (!signUp) return;
+  const onSignUpPress = async () => {
+    if (!isLoaded || !signUp) return;
+    setLoading(true);
+    setErrorMsg("");
+
     try {
-      const { error } = await signUp.password({
-        emailAddress,
+      await signUp.create({
+        emailAddress: emailAddress.trim(),
         password,
       });
-      if (error) {
-        console.error(JSON.stringify(error, null, 2));
-        return;
-      }
-      await signUp.verifications.sendEmailCode();
-    } catch (err) {
-      console.error("Sign up error:", err);
+
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      setPendingVerification(true);
+    } catch (err: any) {
+      console.error(JSON.stringify(err, null, 2));
+      const msg =
+        err?.errors?.[0]?.message ||
+        err?.message ||
+        "An error occurred during sign up.";
+      setErrorMsg(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleVerify = async () => {
-    if (!signUp) return;
+  const onVerifyPress = async () => {
+    if (!isLoaded || !signUp) return;
+    setLoading(true);
+    setErrorMsg("");
+
     try {
-      await signUp.verifications.verifyEmailCode({
-        code,
+      const completeSignUp = await signUp.attemptEmailAddressVerification({
+        code: code.trim(),
       });
-      if (signUp.status === "complete") {
-        await signUp.finalize({
-          navigate: ({ session, decorateUrl }) => {
-            if (session?.currentTask) {
-              console.log(session?.currentTask);
-              return;
-            }
-            const url = decorateUrl("/");
-            if (typeof window !== "undefined" && url.startsWith("http")) {
-              window.location.href = url;
-            } else {
-              router.replace(url as Href);
-            }
-          },
-        });
+
+      if (completeSignUp.status === "complete") {
+        await setActive({ session: completeSignUp.createdSessionId });
+        router.replace("/");
       } else {
-        console.error("Sign-up attempt not complete:", signUp);
+        console.error(JSON.stringify(completeSignUp, null, 2));
+        setErrorMsg("Verification incomplete. Please try again.");
       }
-    } catch (err) {
-      console.error("Verify error:", err);
+    } catch (err: any) {
+      console.error(JSON.stringify(err, null, 2));
+      const msg =
+        err?.errors?.[0]?.message ||
+        err?.message ||
+        "An error occurred during verification.";
+      setErrorMsg(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (signUp?.status === "complete" || isSignedIn) {
+  if (isSignedIn) {
     return null;
   }
 
-  if (
-    signUp?.status === "missing_requirements" &&
-    signUp.unverifiedFields?.includes("email_address") &&
-    signUp.missingFields?.length === 0
-  ) {
+  // Verification step view
+  if (pendingVerification) {
     return (
       <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
         {/* Top Header Bar */}
         <View style={styles.header}>
-          <Link href="/sign-in" asChild>
-            <Pressable style={styles.backButton}>
-              <Ionicons name="chevron-back" size={18} color="#ffffff" />
-              <Text style={styles.backButtonText}>sign-in</Text>
-            </Pressable>
-          </Link>
-          <Text style={styles.headerTitle}>sign-up</Text>
+          <Pressable
+            style={styles.backButton}
+            onPress={() => setPendingVerification(false)}
+          >
+            <Ionicons name="chevron-back" size={18} color="#ffffff" />
+            <Text style={styles.backButtonText}>back</Text>
+          </Pressable>
+          <Text style={styles.headerTitle}>verify email</Text>
         </View>
 
         <View style={styles.container}>
@@ -106,14 +116,7 @@ export default function Page() {
               Enter the verification code sent to your email
             </Text>
 
-            {errors?.fields?.code && (
-              <Text style={styles.errorText}>{errors.fields.code.message}</Text>
-            )}
-            {errors?.global && (
-              <Text style={styles.errorText}>
-                {errors.global.map((e) => e.message).join(", ")}
-              </Text>
-            )}
+            {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
 
             <View style={styles.inputGroup}>
               <TextInput
@@ -121,7 +124,10 @@ export default function Page() {
                 value={code}
                 placeholder="Enter verification code"
                 placeholderTextColor="#6b7280"
-                onChangeText={(text) => setCode(text)}
+                onChangeText={(text) => {
+                  setCode(text);
+                  if (errorMsg) setErrorMsg("");
+                }}
                 keyboardType="numeric"
               />
             </View>
@@ -129,16 +135,23 @@ export default function Page() {
             <Pressable
               style={({ pressed }) => [
                 styles.primaryButton,
-                fetchStatus === "fetching" && styles.primaryButtonDisabled,
+                (!code.trim() || loading) && styles.primaryButtonDisabled,
                 pressed && { opacity: 0.85 },
               ]}
-              onPress={handleVerify}
-              disabled={fetchStatus === "fetching"}
+              onPress={onVerifyPress}
+              disabled={!code.trim() || loading}
             >
-              {fetchStatus === "fetching" ? (
+              {loading ? (
                 <ActivityIndicator color="#121214" />
               ) : (
-                <Text style={styles.primaryButtonText}>Verify ›</Text>
+                <Text
+                  style={[
+                    styles.primaryButtonText,
+                    !code.trim() && styles.primaryButtonTextDisabled,
+                  ]}
+                >
+                  Verify ›
+                </Text>
               )}
             </Pressable>
           </View>
@@ -147,6 +160,7 @@ export default function Page() {
     );
   }
 
+  // Initial Sign Up view
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
       {/* Top Header Bar */}
@@ -165,21 +179,7 @@ export default function Page() {
           <Text style={styles.title}>Create your account</Text>
           <Text style={styles.subtitle}>Welcome! Sign up to continue</Text>
 
-          {errors?.fields?.emailAddress && (
-            <Text style={styles.errorText}>
-              {errors.fields.emailAddress.message}
-            </Text>
-          )}
-          {errors?.fields?.password && (
-            <Text style={styles.errorText}>
-              {errors.fields.password.message}
-            </Text>
-          )}
-          {errors?.global && (
-            <Text style={styles.errorText}>
-              {errors.global.map((e) => e.message).join(", ")}
-            </Text>
-          )}
+          {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
 
           <View style={styles.inputGroup}>
             <TextInput
@@ -188,7 +188,10 @@ export default function Page() {
               value={emailAddress}
               placeholder="Enter your email"
               placeholderTextColor="#6b7280"
-              onChangeText={setEmailAddress}
+              onChangeText={(text) => {
+                setEmailAddress(text);
+                if (errorMsg) setErrorMsg("");
+              }}
               keyboardType="email-address"
             />
             <TextInput
@@ -197,23 +200,24 @@ export default function Page() {
               placeholder="Enter password"
               placeholderTextColor="#6b7280"
               secureTextEntry={true}
-              onChangeText={setPassword}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (errorMsg) setErrorMsg("");
+              }}
             />
           </View>
 
           <Pressable
             style={({ pressed }) => [
               styles.primaryButton,
-              (!emailAddress.trim() || !password || fetchStatus === "fetching") &&
+              (!emailAddress.trim() || !password || loading) &&
                 styles.primaryButtonDisabled,
               pressed && { opacity: 0.85 },
             ]}
-            onPress={handleSubmit}
-            disabled={
-              !emailAddress.trim() || !password || fetchStatus === "fetching"
-            }
+            onPress={onSignUpPress}
+            disabled={!emailAddress.trim() || !password || loading}
           >
-            {fetchStatus === "fetching" ? (
+            {loading ? (
               <ActivityIndicator color="#121214" />
             ) : (
               <Text
@@ -301,9 +305,6 @@ export default function Page() {
               </Pressable>
             </Link>
           </View>
-
-          {/* Required for bot detection / captcha challenges */}
-          <View nativeID="clerk-captcha" />
         </View>
       </View>
     </SafeAreaView>
