@@ -15,10 +15,10 @@ export default function Page() {
     <View style={styles.container}>
       <Text style={styles.title}>Welocme!</Text>
       <Show when="signed-out">
-        <Link href="/(auth)/sign-in">
+        <Link href="/sign-in">
           <Text style={styles.linkText}>Sign in</Text>
         </Link>
-        <Link href="/(auth)/sign-up">
+        <Link href="/sign-up">
           <Text style={styles.linkText}>Sign up</Text>
         </Link>
       </Show>
