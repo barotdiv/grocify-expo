@@ -11,9 +11,19 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import useSocialAuth from "../../hooks/useSocialAuth";
+
+function GoogleIcon() {
+  return (
+    <View style={styles.googleIconContainer}>
+      <Ionicons name="logo-google" size={18} color="#4285F4" />
+    </View>
+  );
+}
 
 export default function Page() {
   const { signUp, errors, fetchStatus } = useSignUp();
+  const { handleSocialAuth, loadingStrategy } = useSocialAuth();
   const { isSignedIn } = useAuth();
   const router = useRouter();
 
@@ -82,50 +92,56 @@ export default function Page() {
         <View style={styles.header}>
           <Link href="/sign-in" asChild>
             <Pressable style={styles.backButton}>
-              <Ionicons name="chevron-back" size={20} color="#000000" />
+              <Ionicons name="chevron-back" size={18} color="#ffffff" />
               <Text style={styles.backButtonText}>sign-in</Text>
             </Pressable>
           </Link>
           <Text style={styles.headerTitle}>sign-up</Text>
         </View>
+
         <View style={styles.container}>
-          <Text style={[styles.title, { fontSize: 24, fontWeight: "bold" }]}>
-            Verify your account
-          </Text>
-          <View style={styles.fieldGroup}>
-            <Text style={styles.label}>Verification code</Text>
-            <TextInput
-              style={styles.input}
-              value={code}
-              placeholder="Enter your verification code"
-              placeholderTextColor="#9ca3af"
-              onChangeText={(code) => setCode(code)}
-              keyboardType="numeric"
-            />
-          </View>
-          {errors?.fields?.code && (
-            <Text style={styles.error}>{errors.fields.code.message}</Text>
-          )}
-          {errors?.global && (
-            <Text style={styles.error}>
-              {errors.global.map((e) => e.message).join(", ")}
+          <View style={styles.card}>
+            <Text style={styles.title}>Verify your account</Text>
+            <Text style={styles.subtitle}>
+              Enter the verification code sent to your email
             </Text>
-          )}
-          <Pressable
-            style={({ pressed }) => [
-              styles.button,
-              fetchStatus === "fetching" && styles.buttonDisabled,
-              pressed && styles.buttonPressed,
-            ]}
-            onPress={handleVerify}
-            disabled={fetchStatus === "fetching"}
-          >
-            {fetchStatus === "fetching" ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <Text style={styles.buttonText}>Verify</Text>
+
+            {errors?.fields?.code && (
+              <Text style={styles.errorText}>{errors.fields.code.message}</Text>
             )}
-          </Pressable>
+            {errors?.global && (
+              <Text style={styles.errorText}>
+                {errors.global.map((e) => e.message).join(", ")}
+              </Text>
+            )}
+
+            <View style={styles.inputGroup}>
+              <TextInput
+                style={styles.input}
+                value={code}
+                placeholder="Enter verification code"
+                placeholderTextColor="#6b7280"
+                onChangeText={(text) => setCode(text)}
+                keyboardType="numeric"
+              />
+            </View>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.primaryButton,
+                fetchStatus === "fetching" && styles.primaryButtonDisabled,
+                pressed && { opacity: 0.85 },
+              ]}
+              onPress={handleVerify}
+              disabled={fetchStatus === "fetching"}
+            >
+              {fetchStatus === "fetching" ? (
+                <ActivityIndicator color="#121214" />
+              ) : (
+                <Text style={styles.primaryButtonText}>Verify ›</Text>
+              )}
+            </Pressable>
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -137,74 +153,158 @@ export default function Page() {
       <View style={styles.header}>
         <Link href="/sign-in" asChild>
           <Pressable style={styles.backButton}>
-            <Ionicons name="chevron-back" size={20} color="#000000" />
+            <Ionicons name="chevron-back" size={18} color="#ffffff" />
             <Text style={styles.backButtonText}>sign-in</Text>
           </Pressable>
         </Link>
         <Text style={styles.headerTitle}>sign-up</Text>
       </View>
-      <View style={styles.container}>
-        <Text style={styles.title}>Sign up</Text>
-        {errors?.fields?.emailAddress && (
-          <Text style={styles.error}>{errors.fields.emailAddress.message}</Text>
-        )}
-        {errors?.fields?.password && (
-          <Text style={styles.error}>{errors.fields.password.message}</Text>
-        )}
-        {errors?.global && (
-          <Text style={styles.error}>
-            {errors.global.map((e) => e.message).join(", ")}
-          </Text>
-        )}
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Email address</Text>
-          <TextInput
-            style={styles.input}
-            autoCapitalize="none"
-            value={emailAddress}
-            placeholder="Enter email"
-            placeholderTextColor="#9ca3af"
-            onChangeText={setEmailAddress}
-            keyboardType="email-address"
-          />
-        </View>
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            value={password}
-            placeholder="Enter password"
-            placeholderTextColor="#9ca3af"
-            secureTextEntry={true}
-            onChangeText={setPassword}
-          />
-        </View>
-        <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            fetchStatus === "fetching" && styles.buttonDisabled,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={handleSubmit}
-          disabled={fetchStatus === "fetching"}
-        >
-          {fetchStatus === "fetching" ? (
-            <ActivityIndicator color="#ffffff" />
-          ) : (
-            <Text style={styles.buttonText}>Sign up</Text>
-          )}
-        </Pressable>
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Already have an account? </Text>
-          <Link href="/sign-in" asChild>
-            <Pressable>
-              <Text style={styles.linkText}>Sign in</Text>
-            </Pressable>
-          </Link>
-        </View>
 
-        {/* Required for bot detection / captcha challenges */}
-        <View nativeID="clerk-captcha" />
+      <View style={styles.container}>
+        <View style={styles.card}>
+          <Text style={styles.title}>Create your account</Text>
+          <Text style={styles.subtitle}>Welcome! Sign up to continue</Text>
+
+          {errors?.fields?.emailAddress && (
+            <Text style={styles.errorText}>
+              {errors.fields.emailAddress.message}
+            </Text>
+          )}
+          {errors?.fields?.password && (
+            <Text style={styles.errorText}>
+              {errors.fields.password.message}
+            </Text>
+          )}
+          {errors?.global && (
+            <Text style={styles.errorText}>
+              {errors.global.map((e) => e.message).join(", ")}
+            </Text>
+          )}
+
+          <View style={styles.inputGroup}>
+            <TextInput
+              style={styles.input}
+              autoCapitalize="none"
+              value={emailAddress}
+              placeholder="Enter your email"
+              placeholderTextColor="#6b7280"
+              onChangeText={setEmailAddress}
+              keyboardType="email-address"
+            />
+            <TextInput
+              style={styles.input}
+              value={password}
+              placeholder="Enter password"
+              placeholderTextColor="#6b7280"
+              secureTextEntry={true}
+              onChangeText={setPassword}
+            />
+          </View>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.primaryButton,
+              (!emailAddress.trim() || !password || fetchStatus === "fetching") &&
+                styles.primaryButtonDisabled,
+              pressed && { opacity: 0.85 },
+            ]}
+            onPress={handleSubmit}
+            disabled={
+              !emailAddress.trim() || !password || fetchStatus === "fetching"
+            }
+          >
+            {fetchStatus === "fetching" ? (
+              <ActivityIndicator color="#121214" />
+            ) : (
+              <Text
+                style={[
+                  styles.primaryButtonText,
+                  (!emailAddress.trim() || !password) &&
+                    styles.primaryButtonTextDisabled,
+                ]}
+              >
+                Sign up ›
+              </Text>
+            )}
+          </Pressable>
+
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          {/* Social Auth Row */}
+          <View style={styles.socialRow}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.socialButton,
+                loadingStrategy === "oauth_apple" && styles.socialButtonActive,
+                pressed && { opacity: 0.8 },
+              ]}
+              onPress={() => handleSocialAuth("oauth_apple")}
+              disabled={!!loadingStrategy}
+            >
+              {loadingStrategy === "oauth_apple" ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <Ionicons name="logo-apple" size={20} color="#ffffff" />
+              )}
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.socialButton,
+                loadingStrategy === "oauth_github" && styles.socialButtonActive,
+                pressed && { opacity: 0.8 },
+              ]}
+              onPress={() => handleSocialAuth("oauth_github")}
+              disabled={!!loadingStrategy}
+            >
+              {loadingStrategy === "oauth_github" ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <Ionicons name="logo-github" size={20} color="#ffffff" />
+              )}
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.socialButton,
+                loadingStrategy === "oauth_google" && styles.socialButtonActive,
+                pressed && { opacity: 0.8 },
+              ]}
+              onPress={() => handleSocialAuth("oauth_google")}
+              disabled={!!loadingStrategy}
+            >
+              {loadingStrategy === "oauth_google" ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <GoogleIcon />
+              )}
+            </Pressable>
+          </View>
+
+          {/* Secured by Clerk */}
+          <View style={styles.footerSecured}>
+            <Text style={styles.securedText}>Secured by </Text>
+            <Text style={styles.clerkLogoDot}>● </Text>
+            <Text style={styles.clerkText}>clerk</Text>
+          </View>
+
+          {/* Already have an account link */}
+          <View style={styles.signInRow}>
+            <Text style={styles.signInText}>Already have an account? </Text>
+            <Link href="/sign-in" asChild>
+              <Pressable>
+                <Text style={styles.signInLink}>Sign in</Text>
+              </Pressable>
+            </Link>
+          </View>
+
+          {/* Required for bot detection / captcha challenges */}
+          <View nativeID="clerk-captcha" />
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -213,111 +313,167 @@ export default function Page() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f9fafb",
+    backgroundColor: "#ffffff",
   },
   header: {
-    height: 48,
-    flexDirection: "row",
+    height: 44,
+    backgroundColor: "#ffffff",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
     position: "relative",
   },
   backButton: {
     position: "absolute",
-    left: 16,
+    left: 14,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: "#ffffff",
-    borderRadius: 20,
+    backgroundColor: "#121214",
+    borderRadius: 16,
     paddingHorizontal: 10,
-    paddingVertical: 5,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    paddingVertical: 4,
   },
   backButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "500",
-    color: "#000000",
+    color: "#ffffff",
     marginLeft: 2,
   },
   headerTitle: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
+    fontWeight: "500",
+    color: "#111827",
   },
   container: {
     flex: 1,
+    backgroundColor: "#121214",
     paddingHorizontal: 24,
-    paddingTop: 16,
-    backgroundColor: "#f9fafb",
+    paddingTop: 36,
+  },
+  card: {
+    width: "100%",
   },
   title: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: "700",
-    color: "#111827",
-    marginBottom: 24,
-  },
-  error: {
-    color: "#ef4444",
-    marginBottom: 12,
-    fontSize: 14,
-  },
-  fieldGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#1f2937",
+    color: "#ffffff",
+    textAlign: "center",
     marginBottom: 6,
   },
+  subtitle: {
+    fontSize: 14,
+    color: "#9ca3af",
+    textAlign: "center",
+    marginBottom: 28,
+  },
+  errorText: {
+    color: "#ef4444",
+    fontSize: 13,
+    textAlign: "center",
+    marginBottom: 14,
+  },
+  inputGroup: {
+    gap: 12,
+    marginBottom: 16,
+  },
   input: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#1e1e22",
     borderWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#2d2d34",
     borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: "#111827",
-  },
-  button: {
-    backgroundColor: "#0284c7",
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 8,
-    marginBottom: 24,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonPressed: {
-    opacity: 0.85,
-  },
-  buttonText: {
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    fontSize: 15,
     color: "#ffffff",
-    fontSize: 16,
-    fontWeight: "600",
   },
-  footer: {
+  primaryButton: {
+    backgroundColor: "#e1e1e6",
+    borderRadius: 8,
+    paddingVertical: 13,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 4,
+  },
+  primaryButtonDisabled: {
+    backgroundColor: "#333338",
+  },
+  primaryButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#121214",
+  },
+  primaryButtonTextDisabled: {
+    color: "#71717a",
+  },
+  dividerRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 12,
+    marginVertical: 24,
   },
-  footerText: {
-    fontSize: 14,
-    color: "#6b7280",
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#27272a",
   },
-  linkText: {
+  dividerText: {
+    color: "#71717a",
+    fontSize: 13,
+    paddingHorizontal: 14,
+  },
+  socialRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 32,
+  },
+  socialButton: {
+    flex: 1,
+    height: 48,
+    backgroundColor: "#1e1e22",
+    borderWidth: 1,
+    borderColor: "#2d2d34",
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  socialButtonActive: {
+    borderColor: "#60a5fa",
+  },
+  googleIconContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  footerSecured: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  securedText: {
+    fontSize: 12,
+    color: "#71717a",
+  },
+  clerkLogoDot: {
+    fontSize: 8,
+    color: "#6366f1",
+  },
+  clerkText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#9ca3af",
+  },
+  signInRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  signInText: {
     fontSize: 14,
-    color: "#0284c7",
+    color: "#71717a",
+  },
+  signInLink: {
+    fontSize: 14,
     fontWeight: "600",
+    color: "#38bdf8",
   },
 });

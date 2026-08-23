@@ -1,4 +1,5 @@
 import { useSignIn } from '@clerk/expo/legacy'
+import { Ionicons } from '@expo/vector-icons'
 import { Link, useRouter } from 'expo-router'
 import React, { useState } from 'react'
 import {
@@ -10,24 +11,44 @@ import {
   View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import useSocialAuth, { SocialStrategy } from '../../hooks/useSocialAuth'
+
+function GoogleIcon() {
+  return (
+    <View style={styles.googleIconContainer}>
+      <Ionicons name="logo-google" size={18} color="#4285F4" />
+    </View>
+  )
+}
 
 export default function SignInScreen() {
   const { signIn, setActive, isLoaded } = useSignIn()
+  const { handleSocialAuth, loadingStrategy } = useSocialAuth()
   const router = useRouter()
 
   const [emailAddress, setEmailAddress] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
+  const handleContinue = async () => {
+    if (!emailAddress.trim()) return
+    if (!showPassword) {
+      setShowPassword(true)
+      return
+    }
+    await onSignInPress()
+  }
+
   const onSignInPress = async () => {
-    if (!isLoaded) return
+    if (!isLoaded || !signIn) return
     setLoading(true)
     setErrorMsg('')
 
     try {
       const signInAttempt = await signIn.create({
-        identifier: emailAddress,
+        identifier: emailAddress.trim(),
         password,
       })
 
@@ -52,59 +73,144 @@ export default function SignInScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+      {/* Header bar */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>sign-in</Text>
+      </View>
+
+      {/* Main content dark container */}
       <View style={styles.container}>
-        <Text style={styles.title}>Sign in</Text>
+        <View style={styles.card}>
+          <Text style={styles.title}>Continue to Grocify</Text>
+          <Text style={styles.subtitle}>Welcome! Sign in to continue</Text>
 
-        {errorMsg ? <Text style={styles.error}>{errorMsg}</Text> : null}
+          {errorMsg ? <Text style={styles.errorText}>{errorMsg}</Text> : null}
 
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Email address</Text>
-          <TextInput
-            style={styles.input}
-            autoCapitalize="none"
-            value={emailAddress}
-            placeholder="Enter email"
-            placeholderTextColor="#9ca3af"
-            onChangeText={setEmailAddress}
-            keyboardType="email-address"
-          />
-        </View>
+          <View style={styles.inputGroup}>
+            <TextInput
+              style={styles.input}
+              autoCapitalize="none"
+              value={emailAddress}
+              placeholder="Enter your email"
+              placeholderTextColor="#6b7280"
+              onChangeText={(text) => {
+                setEmailAddress(text)
+                if (errorMsg) setErrorMsg('')
+              }}
+              keyboardType="email-address"
+            />
 
-        <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            value={password}
-            placeholder="Enter password"
-            placeholderTextColor="#9ca3af"
-            secureTextEntry={true}
-            onChangeText={setPassword}
-          />
-        </View>
+            {showPassword && (
+              <TextInput
+                style={styles.input}
+                value={password}
+                placeholder="Enter password"
+                placeholderTextColor="#6b7280"
+                secureTextEntry={true}
+                onChangeText={(text) => {
+                  setPassword(text)
+                  if (errorMsg) setErrorMsg('')
+                }}
+              />
+            )}
+          </View>
 
-        <Pressable
-          style={({ pressed }) => [
-            styles.button,
-            loading && styles.buttonDisabled,
-            pressed && styles.buttonPressed,
-          ]}
-          onPress={onSignInPress}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#ffffff" />
-          ) : (
-            <Text style={styles.buttonText}>Sign in</Text>
-          )}
-        </Pressable>
+          <Pressable
+            style={({ pressed }) => [
+              styles.continueButton,
+              (!emailAddress.trim() || loading) && styles.continueButtonDisabled,
+              pressed && { opacity: 0.85 },
+            ]}
+            onPress={handleContinue}
+            disabled={!emailAddress.trim() || loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#121214" />
+            ) : (
+              <Text
+                style={[
+                  styles.continueButtonText,
+                  !emailAddress.trim() && styles.continueButtonTextDisabled,
+                ]}
+              >
+                {showPassword ? 'Sign in ›' : 'Continue ›'}
+              </Text>
+            )}
+          </Pressable>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account? </Text>
-          <Link href="/sign-up" asChild>
-            <Pressable>
-              <Text style={styles.linkText}>Sign up</Text>
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          {/* Social Auth Buttons */}
+          <View style={styles.socialRow}>
+            <Pressable
+              style={({ pressed }) => [
+                styles.socialButton,
+                loadingStrategy === 'oauth_apple' && styles.socialButtonActive,
+                pressed && { opacity: 0.8 },
+              ]}
+              onPress={() => handleSocialAuth('oauth_apple')}
+              disabled={!!loadingStrategy}
+            >
+              {loadingStrategy === 'oauth_apple' ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <Ionicons name="logo-apple" size={20} color="#ffffff" />
+              )}
             </Pressable>
-          </Link>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.socialButton,
+                loadingStrategy === 'oauth_github' && styles.socialButtonActive,
+                pressed && { opacity: 0.8 },
+              ]}
+              onPress={() => handleSocialAuth('oauth_github')}
+              disabled={!!loadingStrategy}
+            >
+              {loadingStrategy === 'oauth_github' ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <Ionicons name="logo-github" size={20} color="#ffffff" />
+              )}
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.socialButton,
+                loadingStrategy === 'oauth_google' && styles.socialButtonActive,
+                pressed && { opacity: 0.8 },
+              ]}
+              onPress={() => handleSocialAuth('oauth_google')}
+              disabled={!!loadingStrategy}
+            >
+              {loadingStrategy === 'oauth_google' ? (
+                <ActivityIndicator size="small" color="#ffffff" />
+              ) : (
+                <GoogleIcon />
+              )}
+            </Pressable>
+          </View>
+
+          {/* Secured by Clerk */}
+          <View style={styles.footerSecured}>
+            <Text style={styles.securedText}>Secured by </Text>
+            <Text style={styles.clerkLogoDot}>● </Text>
+            <Text style={styles.clerkText}>clerk</Text>
+          </View>
+
+          {/* Don't have an account link */}
+          <View style={styles.signUpRow}>
+            <Text style={styles.signUpText}>Don't have an account? </Text>
+            <Link href="/sign-up" asChild>
+              <Pressable>
+                <Text style={styles.signUpLink}>Sign up</Text>
+              </Pressable>
+            </Link>
+          </View>
         </View>
       </View>
     </SafeAreaView>
@@ -114,75 +220,150 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#ffffff',
+  },
+  header: {
+    height: 44,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  headerTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#111827',
   },
   container: {
     flex: 1,
+    backgroundColor: '#121214',
     paddingHorizontal: 24,
-    paddingTop: 40,
-    backgroundColor: '#f9fafb',
+    paddingTop: 36,
+  },
+  card: {
+    width: '100%',
   },
   title: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '700',
-    color: '#111827',
-    marginBottom: 24,
-  },
-  error: {
-    color: '#ef4444',
-    marginBottom: 12,
-    fontSize: 14,
-  },
-  fieldGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1f2937',
+    color: '#ffffff',
+    textAlign: 'center',
     marginBottom: 6,
   },
+  subtitle: {
+    fontSize: 14,
+    color: '#9ca3af',
+    textAlign: 'center',
+    marginBottom: 28,
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: 14,
+  },
+  inputGroup: {
+    gap: 12,
+    marginBottom: 16,
+  },
   input: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#1e1e22',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: '#2d2d34',
     borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#111827',
-  },
-  button: {
-    backgroundColor: '#0284c7',
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 24,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonPressed: {
-    opacity: 0.85,
-  },
-  buttonText: {
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    fontSize: 15,
     color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
   },
-  footer: {
+  continueButton: {
+    backgroundColor: '#e1e1e6',
+    borderRadius: 8,
+    paddingVertical: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  continueButtonDisabled: {
+    backgroundColor: '#333338',
+  },
+  continueButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#121214',
+  },
+  continueButtonTextDisabled: {
+    color: '#71717a',
+  },
+  dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 12,
+    marginVertical: 24,
   },
-  footerText: {
-    fontSize: 14,
-    color: '#6b7280',
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#27272a',
   },
-  linkText: {
+  dividerText: {
+    color: '#71717a',
+    fontSize: 13,
+    paddingHorizontal: 14,
+  },
+  socialRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 32,
+  },
+  socialButton: {
+    flex: 1,
+    height: 48,
+    backgroundColor: '#1e1e22',
+    borderWidth: 1,
+    borderColor: '#2d2d34',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  socialButtonActive: {
+    borderColor: '#60a5fa',
+  },
+  googleIconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  footerSecured: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  securedText: {
+    fontSize: 12,
+    color: '#71717a',
+  },
+  clerkLogoDot: {
+    fontSize: 8,
+    color: '#6366f1',
+  },
+  clerkText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#9ca3af',
+  },
+  signUpRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  signUpText: {
     fontSize: 14,
-    color: '#0284c7',
+    color: '#71717a',
+  },
+  signUpLink: {
+    fontSize: 14,
     fontWeight: '600',
+    color: '#38bdf8',
   },
 })
