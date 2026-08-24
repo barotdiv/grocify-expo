@@ -75,6 +75,12 @@ export default function SignInScreen() {
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       {/* Header bar */}
       <View style={styles.header}>
+        <Link href="/sign-up" asChild>
+          <Pressable style={styles.backButton}>
+            <Ionicons name="chevron-back" size={18} color="#ffffff" />
+            <Text style={styles.backButtonText}>sign-up</Text>
+          </Pressable>
+        </Link>
         <Text style={styles.headerTitle}>sign-in</Text>
       </View>
 
@@ -158,7 +164,10 @@ export default function SignInScreen() {
               {loadingStrategy === 'oauth_apple' ? (
                 <ActivityIndicator size="small" color="#ffffff" />
               ) : (
-                <Ionicons name="logo-apple" size={20} color="#ffffff" />
+                <>
+                  <Ionicons name="logo-apple" size={18} color="#ffffff" />
+                  <Text style={styles.socialButtonText}>Apple</Text>
+                </>
               )}
             </Pressable>
 
@@ -174,7 +183,10 @@ export default function SignInScreen() {
               {loadingStrategy === 'oauth_github' ? (
                 <ActivityIndicator size="small" color="#ffffff" />
               ) : (
-                <Ionicons name="logo-github" size={20} color="#ffffff" />
+                <>
+                  <Ionicons name="logo-github" size={18} color="#ffffff" />
+                  <Text style={styles.socialButtonText}>GitHub</Text>
+                </>
               )}
             </Pressable>
 
@@ -190,7 +202,10 @@ export default function SignInScreen() {
               {loadingStrategy === 'oauth_google' ? (
                 <ActivityIndicator size="small" color="#ffffff" />
               ) : (
-                <GoogleIcon />
+                <>
+                  <GoogleIcon />
+                  <Text style={styles.socialButtonText}>Google</Text>
+                </>
               )}
             </Pressable>
           </View>
@@ -202,11 +217,11 @@ export default function SignInScreen() {
             <Text style={styles.clerkText}>clerk</Text>
           </View>
 
-          {/* Don't have an account link */}
+          {/* Don't have an account link in button format */}
           <View style={styles.signUpRow}>
             <Text style={styles.signUpText}>Don't have an account? </Text>
             <Link href="/sign-up" asChild>
-              <Pressable>
+              <Pressable style={({ pressed }) => [styles.linkButton, pressed && { opacity: 0.8 }]}>
                 <Text style={styles.signUpLink}>Sign up</Text>
               </Pressable>
             </Link>
@@ -229,6 +244,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    left: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#121214',
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  backButtonText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#ffffff',
+    marginLeft: 2,
   },
   headerTitle: {
     fontSize: 14,
@@ -318,13 +350,19 @@ const styles = StyleSheet.create({
   },
   socialButton: {
     flex: 1,
-    height: 48,
+    height: 56,
     backgroundColor: '#1e1e22',
     borderWidth: 1,
     borderColor: '#2d2d34',
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 4,
+  },
+  socialButtonText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#d1d5db',
   },
   socialButtonActive: {
     borderColor: '#60a5fa',
@@ -361,8 +399,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#71717a',
   },
+  linkButton: {
+    backgroundColor: '#1e1e22',
+    borderWidth: 1,
+    borderColor: '#38bdf8',
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginLeft: 4,
+  },
   signUpLink: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#38bdf8',
   },

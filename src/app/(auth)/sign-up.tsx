@@ -252,7 +252,10 @@ export default function SignUpScreen() {
               {loadingStrategy === "oauth_apple" ? (
                 <ActivityIndicator size="small" color="#ffffff" />
               ) : (
-                <Ionicons name="logo-apple" size={20} color="#ffffff" />
+                <>
+                  <Ionicons name="logo-apple" size={18} color="#ffffff" />
+                  <Text style={styles.socialButtonText}>Apple</Text>
+                </>
               )}
             </Pressable>
 
@@ -268,7 +271,10 @@ export default function SignUpScreen() {
               {loadingStrategy === "oauth_github" ? (
                 <ActivityIndicator size="small" color="#ffffff" />
               ) : (
-                <Ionicons name="logo-github" size={20} color="#ffffff" />
+                <>
+                  <Ionicons name="logo-github" size={18} color="#ffffff" />
+                  <Text style={styles.socialButtonText}>GitHub</Text>
+                </>
               )}
             </Pressable>
 
@@ -284,7 +290,10 @@ export default function SignUpScreen() {
               {loadingStrategy === "oauth_google" ? (
                 <ActivityIndicator size="small" color="#ffffff" />
               ) : (
-                <GoogleIcon />
+                <>
+                  <GoogleIcon />
+                  <Text style={styles.socialButtonText}>Google</Text>
+                </>
               )}
             </Pressable>
           </View>
@@ -300,7 +309,7 @@ export default function SignUpScreen() {
           <View style={styles.signInRow}>
             <Text style={styles.signInText}>Already have an account? </Text>
             <Link href="/sign-in" asChild>
-              <Pressable>
+              <Pressable style={({ pressed }) => [styles.linkButton, pressed && { opacity: 0.8 }]}>
                 <Text style={styles.signInLink}>Sign in</Text>
               </Pressable>
             </Link>
@@ -429,13 +438,19 @@ const styles = StyleSheet.create({
   },
   socialButton: {
     flex: 1,
-    height: 48,
+    height: 56,
     backgroundColor: "#1e1e22",
     borderWidth: 1,
     borderColor: "#2d2d34",
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
+    gap: 4,
+  },
+  socialButtonText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#d1d5db",
   },
   socialButtonActive: {
     borderColor: "#60a5fa",
@@ -472,8 +487,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#71717a",
   },
+  linkButton: {
+    backgroundColor: "#1e1e22",
+    borderWidth: 1,
+    borderColor: "#38bdf8",
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginLeft: 4,
+  },
   signInLink: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
     color: "#38bdf8",
   },
