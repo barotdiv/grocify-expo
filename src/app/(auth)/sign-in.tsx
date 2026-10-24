@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   continueButton: {
-    backgroundColor: '#c8c8cc',
+    backgroundColor: '#f5f5f7',
     borderRadius: 8,
     height: 50,
     alignItems: 'center',
@@ -335,16 +335,17 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   continueButtonDisabled: {
-    backgroundColor: '#b5b5b8',
-    opacity: 0.65,
+    backgroundColor: '#e5e5ea',
+    opacity: 0.6,
   },
   continueButtonPressed: {
     opacity: 0.85,
+    transform: [{ scale: 0.99 }],
   },
   continueButtonText: {
     fontSize: 15,
-    fontWeight: '500',
-    color: '#52525b',
+    fontWeight: '600',
+    color: '#121214',
   },
   continueButtonTextDisabled: {
     color: '#71717a',

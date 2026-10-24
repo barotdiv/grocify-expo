@@ -12,7 +12,7 @@ export default function Page() {
   const { signOut } = useClerk();
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} >
       <Text style={styles.title}>Welocme!</Text>
       <Show when="signed-out">
         <Link href="/sign-in">
