@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { GroceryCategory, GroceryItem, Priority } from "../types/grocery";
 
 interface GroceryState {
@@ -71,51 +73,59 @@ const INITIAL_ITEMS: GroceryItem[] = [
   },
 ];
 
-export const useGroceryStore = create<GroceryState>((set) => ({
-  items: INITIAL_ITEMS,
-  selectedCategory: "All",
+export const useGroceryStore = create<GroceryState>()(
+  persist(
+    (set) => ({
+      items: INITIAL_ITEMS,
+      selectedCategory: "All",
 
-  setSelectedCategory: (category) => set({ selectedCategory: category }),
+      setSelectedCategory: (category) => set({ selectedCategory: category }),
 
-  toggleItem: (id) =>
-    set((state) => ({
-      items: state.items.map((item) =>
-        item.id === id ? { ...item, isCompleted: !item.isCompleted } : item
-      ),
-    })),
+      toggleItem: (id) =>
+        set((state) => ({
+          items: state.items.map((item) =>
+            item.id === id ? { ...item, isCompleted: !item.isCompleted } : item
+          ),
+        })),
 
-  addItem: (newItem) =>
-    set((state) => ({
-      items: [
-        {
-          ...newItem,
-          id: Date.now().toString(),
-          priority: newItem.priority || "medium",
-          isCompleted: false,
-          createdAt: new Date().toISOString(),
-        },
-        ...state.items,
-      ],
-    })),
+      addItem: (newItem) =>
+        set((state) => ({
+          items: [
+            {
+              ...newItem,
+              id: Date.now().toString(),
+              priority: newItem.priority || "medium",
+              isCompleted: false,
+              createdAt: new Date().toISOString(),
+            },
+            ...state.items,
+          ],
+        })),
 
-  deleteItem: (id) =>
-    set((state) => ({
-      items: state.items.filter((item) => item.id !== id),
-    })),
+      deleteItem: (id) =>
+        set((state) => ({
+          items: state.items.filter((item) => item.id !== id),
+        })),
 
-  updateQuantity: (id, delta) =>
-    set((state) => ({
-      items: state.items.map((item) => {
-        if (item.id === id) {
-          const newQty = Math.max(1, item.quantity + delta);
-          return { ...item, quantity: newQty };
-        }
-        return item;
-      }),
-    })),
+      updateQuantity: (id, delta) =>
+        set((state) => ({
+          items: state.items.map((item) => {
+            if (item.id === id) {
+              const newQty = Math.max(1, item.quantity + delta);
+              return { ...item, quantity: newQty };
+            }
+            return item;
+          }),
+        })),
 
-  clearCompleted: () =>
-    set((state) => ({
-      items: state.items.filter((item) => !item.isCompleted),
-    })),
-}));
+      clearCompleted: () =>
+        set((state) => ({
+          items: state.items.filter((item) => !item.isCompleted),
+        })),
+    }),
+    {
+      name: "grocify-grocery-storage",
+      storage: createJSONStorage(() => AsyncStorage),
+    }
+  )
+);
