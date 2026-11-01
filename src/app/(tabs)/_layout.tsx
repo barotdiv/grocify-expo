@@ -7,8 +7,8 @@ export default function TabsLayout() {
     const { isSignedIn, isLoaded } = useAuth()
     if (!isLoaded) {
         return (
-            <View className="flex-1 items-center justify-center bg-gray-50 dark:bg-gray-900">
-                <ActivityIndicator size="large" color="#0284c7" />
+            <View className="flex-1 items-center justify-center bg-background">
+                <ActivityIndicator size="large" color="#16a34a" />
             </View>
         )
     }
@@ -18,15 +18,20 @@ export default function TabsLayout() {
     return (
         <Tabs screenOptions={{
             headerShown: false,
-            tabBarActiveTintColor: "#0284c7",
+            tabBarActiveTintColor: "#16a34a",
             tabBarInactiveTintColor: "#9ca3af",
             tabBarStyle: {
                 backgroundColor: "#ffffff",
                 borderTopWidth: 1,
-                borderTopColor: "#f3f4f6",
-                height: 60,
-                paddingBottom: 8,
+                borderTopColor: "#f0fdf4",
+                height: 64,
+                paddingBottom: 10,
                 paddingTop: 8,
+                elevation: 8,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: -2 },
+                shadowOpacity: 0.05,
+                shadowRadius: 4,
             },
             tabBarLabelStyle: {
                 fontSize: 12,
@@ -53,7 +58,7 @@ export default function TabsLayout() {
                     title: "Planner",
                     tabBarIcon: ({ color, focused }) => (
                         <Ionicons
-                            name={focused ? "calendar" : "calendar-outline"}
+                            name={focused ? "add-circle" : "add-circle-outline"}
                             size={24}
                             color={color}
                         />
