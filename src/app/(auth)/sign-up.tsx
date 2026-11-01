@@ -1,8 +1,8 @@
-import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@clerk/expo";
 import { useSignUp } from "@clerk/expo/legacy";
+import { Ionicons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -227,7 +227,7 @@ export default function SignUpScreen() {
             style={({ pressed }) => [
               styles.primaryButton,
               (!emailAddress.trim() || !password || loading) &&
-                styles.primaryButtonDisabled,
+              styles.primaryButtonDisabled,
               pressed && styles.primaryButtonPressed,
             ]}
             onPress={onSignUpPress}
@@ -240,7 +240,7 @@ export default function SignUpScreen() {
                 style={[
                   styles.primaryButtonText,
                   (!emailAddress.trim() || !password) &&
-                    styles.primaryButtonTextDisabled,
+                  styles.primaryButtonTextDisabled,
                 ]}
               >
                 Sign up ›

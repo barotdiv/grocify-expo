@@ -1,7 +1,7 @@
-import { useSignIn } from '@clerk/expo/legacy'
-import { Ionicons } from '@expo/vector-icons'
-import { Link, useRouter } from 'expo-router'
-import React, { useState } from 'react'
+import { useSignIn } from '@clerk/expo/legacy';
+import { Ionicons } from '@expo/vector-icons';
+import { Link, useRouter } from 'expo-router';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -9,10 +9,10 @@ import {
   Text,
   TextInput,
   View,
-} from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import Svg, { Path } from 'react-native-svg'
-import useSocialAuth from '../../hooks/useSocialAuth'
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
+import useSocialAuth from '../../hooks/useSocialAuth';
 
 function GoogleIcon({ size = 22 }: { size?: number }) {
   return (
